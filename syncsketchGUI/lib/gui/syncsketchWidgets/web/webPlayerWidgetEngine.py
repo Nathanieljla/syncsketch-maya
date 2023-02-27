@@ -1,5 +1,6 @@
 from syncsketchGUI.lib import user as user
-from syncsketchGUI.vendor.Qt import QtCore, QtWebEngineWidgets
+from PySide2 import QtCore, QtWebEngineWidgets
+#from syncsketchGUI.vendor.Qt import QtCore, QtWebEngineWidgets
 from syncsketchGUI.lib.gui import qt_utils
 
 class OpenPlayerView(QtWebEngineWidgets.QWebEngineView):

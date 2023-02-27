@@ -52,6 +52,7 @@ def _remove_special_characters(string):
     sanitized_string = ''.join(e for e in string if e.isalnum())
     return sanitized_string
 
+#TODO: Make this play nice with Python3
 def _make_object_name(string):
     '''
     Convert the given string into a python usable object name.
@@ -60,13 +61,13 @@ def _make_object_name(string):
     '''
     if string:
         string = _remove_special_characters(string)
-        string = string.encode('ascii', 'ignore')
+        #string = string.encode('ascii', 'ignore')
 
-    unique_id = str(uuid.uuid4())
-    unique_id = _remove_special_characters(unique_id)
+    #unique_id = str(uuid.uuid4())
+    #unique_id = _remove_special_characters(unique_id)
 
-    if not string:
-        string = '{}{}'.format('MenuItem_', unique_id)
+    #if not string:
+        #string = '{}{}'.format('MenuItem_', unique_id)
 
     return '{}{}'.format(menu_prefix, string)
 
@@ -77,7 +78,10 @@ def _add_menu_top(menu_top_label):
     main_menu_bar = _get_main_menu_bar()
     menu_top_object = _make_object_name(menu_top_label)
 
-    if mel.eval('menu -exists {}'.format(menu_top_object)):
+    command =  'menu -exists {0}'.format(menu_top_object)
+
+    print(command)
+    if mel.eval(command):
         cmds.deleteUI(menu_top_object, menu = True)
 
     menu_top = cmds.menu(  menu_top_object,
@@ -176,7 +180,7 @@ def _populate_menus(menu_data, menu_parent):
     for item in menu_data:
 
         # If the value is a list, the item has submenu
-        if isinstance(item.values()[0], list):
+        if isinstance(list(item.values())[0], list):
             menu_label = item.keys()[0]
             menu_parent_label = menu_parent
             _add_menu( menu_label,
@@ -184,17 +188,17 @@ def _populate_menus(menu_data, menu_parent):
 
         # If the value is a string, the item has no submenu,
         # and if it's a divider, add a divider instead of a command
-        elif isinstance(item.values()[0], str) and \
-                item.values()[0].lower() == 'divider':
-            divider_label = item.keys()[0]
+        elif isinstance(list(item.values())[0], str) and \
+                list(item.values())[0].lower() == 'divider':
+            divider_label = list(item.keys())[0]
             divider_parent_label = menu_parent
             _add_divider(divider_label, divider_parent_label)
 
         # If the value is a string, the item has no submenu.
         # Then just add it as a menu command with
         else:
-            menu_item_label = item.keys()[0]
-            menu_item_command = item.values()[0]
+            menu_item_label = list(item.keys())[0]
+            menu_item_command = list(item.values())[0]
             menu_item_parent_label = menu_parent
 
             if 'option' in menu_item_label.lower():
@@ -213,9 +217,11 @@ def _populate_menus(menu_data, menu_parent):
             # make maya interpret the command as a MEL command.
             menu_item_command = _sanitize_mel_command(menu_item_command)
             if menu_item_command:
-                mel_command = 'menuItem -edit -command "{}" {}'\
+                mel_command = 'menuItem -edit -command "{0}" {1}'\
                                 .format(   menu_item_command,
                                             menu_item_object)
+                
+                print(mel_command)
                 mel.eval(mel_command)
 
 # ======================================================================
@@ -280,8 +286,8 @@ def build_menu():
                 second_menus.append(second_menu)
 
     for second_menu in second_menus:
-        second_menu_data = second_menu.values()[0]
-        second_menu_parent = second_menu.keys()[0]
+        second_menu_data = list(second_menu.values())[0]
+        second_menu_parent = list(second_menu.keys())[0]
 
         if isinstance(second_menu_data, list):
             _populate_menus(second_menu_data, second_menu_parent)
@@ -295,8 +301,8 @@ def build_menu():
                     third_menus.append(third_menu)
 
     for third_menu in third_menus:
-        third_menu_data = third_menu.values()[0]
-        third_menu_parent = third_menu.keys()[0]
+        third_menu_data = list(third_menu.values())[0]
+        third_menu_parent = list(third_menu.keys())[0]
 
         if isinstance(third_menu_data, list):
             _populate_menus(third_menu_data, third_menu_parent)

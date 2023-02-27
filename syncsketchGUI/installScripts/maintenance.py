@@ -1,7 +1,9 @@
 import pkg_resources
 import syncsketchGUI
+import importlib
 import os
-import urllib2
+
+from urllib.request import urlopen #import urllib2
 import sys
 
 import logging
@@ -17,8 +19,9 @@ class InstallerLiterals(object):
 
 def getLatestSetupPyFileFromRepo():
     """Parses latest setup.py's version number"""
-    response = urllib2.urlopen(InstallerLiterals.setupPyPath)
+    response = urlopen(InstallerLiterals.setupPyPath)
     html = response.read()
+    html = html.decode('utf8')
     return html.split("version = '")[1].split("',")[0]
 
 
@@ -26,7 +29,7 @@ def getLatestSetupPyFileFromLocal():
     """Checks locally installed packages version number"""
     import pkg_resources
     #reload module to make sure we have loaded the latest live install
-    reload(pkg_resources)
+    importlib.reload(pkg_resources)
     local = pkg_resources.get_distribution(
         "syncSketchGUI").version
     return local
@@ -43,10 +46,10 @@ def getVersionDifference():
          pass
 
 def overwriteLatestInstallerFile():
-    import urllib2
+    import urllib3
     logger.info("Attempting to replace installGui.py with release {}".format(InstallerLiterals.installerPyGuiPath))
     """Parses latest setup.py's version number"""
-    response = urllib2.urlopen(InstallerLiterals.installerPyGuiPath)
+    response = urllib3.urlopen(InstallerLiterals.installerPyGuiPath)
     data = response.read()
 
     #Let's get the path of the installer
@@ -81,7 +84,7 @@ def handleUpgrade():
         logger.info("installGui.InstallOptions.upgrade {}".format(installGui.InstallOptions.upgrade))
         #Make sure we only show this window once per Session
         if not installGui.InstallOptions.upgrade == 1:
-            reload(installGui)
+            importlib.reload(installGui)
             #If this is set to 1, it means upgrade was already installed
             installGui.InstallOptions.upgrade = 1
 

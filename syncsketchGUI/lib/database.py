@@ -27,7 +27,8 @@ def _parse_yaml(yaml_file = CACHE_YAML):
         raise RuntimeError('Please provide valid yaml file.')
 
     with open(yaml_file, 'r') as stream:
-        data = yaml.load(stream)
+        #data = yaml.load(stream)
+        data = yaml.safe_load(stream)
 
     return data
 

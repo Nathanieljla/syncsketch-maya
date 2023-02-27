@@ -1,5 +1,6 @@
 from syncsketchGUI.installScripts import installGui
 from syncsketchGUI.installScripts.maintenance import getVersionDifference
+import importlib
 import os
 import time
 import webbrowser
@@ -33,7 +34,7 @@ WAIT_TIME = 0.1 # seconds
 from syncsketchGUI.lib import user, path
 from syncsketchGUI.lib import video, database
 from syncsketchGUI.lib.gui import icons, qt_utils, qt_widgets
-import gui
+import syncsketchGUI.gui
 
 # ======================================================================
 # Maya Imports
@@ -62,16 +63,16 @@ def reload_toolkit():
     from syncsketchGUI.lib import database
     from syncsketchGUI.lib import video
     from syncsketchGUI.lib import user
-    import gui
+    import syncsketchGUI.gui
 
-    reload(database)
-    reload(video)
-    reload(gui)
-    reload(path)
-    reload(icons)
-    reload(user)
-    reload(qt_widgets)
-    reload(qt_utils)
+    importlib.reload(database)
+    importlib.reload(video)
+    importlib.reload(gui)
+    importlib.reload(path)
+    importlib.reload(icons)
+    importlib.reload(user)
+    importlib.reload(qt_widgets)
+    importlib.reload(qt_utils)
 
 
     from syncsketchGUI.lib.maya import menu as maya_menu
@@ -80,11 +81,11 @@ def reload_toolkit():
     from syncsketchGUI.lib.maya import timeline as maya_timeline
     from syncsketchGUI.vendor import capture as maya_capture
 
-    reload(maya_menu)
-    reload(maya_scene)
-    reload(maya_shelf)
-    reload(maya_capture)
-    reload(maya_timeline)
+    importlib.reload(maya_menu)
+    importlib.reload(maya_scene)
+    importlib.reload(maya_shelf)
+    importlib.reload(maya_capture)
+    importlib.reload(maya_timeline)
 
 def build_menu():
     maya_menu.build_menu()

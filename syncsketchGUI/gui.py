@@ -11,27 +11,31 @@ import yaml
 import re
 from functools import partial
 
-from vendor.Qt.QtWidgets import QApplication
+from maya import OpenMayaUI as omui
+from shiboken2 import wrapInstance
+from PySide2.QtWidgets import QMainWindow
+
+from .vendor.Qt.QtWidgets import QApplication
 
 import syncsketchGUI
 
-from lib.gui.qt_widgets import *
-from lib.gui import qt_utils
-from lib.gui.qt_utils import *
+from .lib.gui.qt_widgets import *
+from .lib.gui import qt_utils
+from .lib.gui.qt_utils import *
 
 
-from lib.connection import *
-from vendor import mayapalette
-from vendor.Qt import QtCompat
-from vendor.Qt import QtCore
-from vendor.Qt import QtGui
-from vendor.Qt import QtWidgets
+from .lib.connection import *
+from .vendor import mayapalette
+from .vendor.Qt import QtCompat
+from .vendor.Qt import QtCore
+from .vendor.Qt import QtGui
+from .vendor.Qt import QtWidgets
 
 import logging
 logger = logging.getLogger("syncsketchGUI")
 
 
-from lib.gui.syncsketchWidgets.web import LoginView
+from .lib.gui.syncsketchWidgets.web import LoginView
 import maya.cmds as cmds
 
 PALETTE_YAML = 'syncsketch_palette.yaml'
@@ -50,10 +54,13 @@ def _maya_main_window():
     """
     Return Maya's main window
     """
-    for obj in QtWidgets.qApp.topLevelWidgets():
-        if obj.objectName() == 'MayaWindow':
-            return obj
-    raise RuntimeError('Could not find MayaWindow instance')
+    _mayaMainWindowPtr = omui.MQtUtil.mainWindow()
+    return wrapInstance( int(_mayaMainWindowPtr), QMainWindow)    
+    
+    #for obj in QtWidgets.qApp.topLevelWidgets():
+        #if obj.objectName() == 'MayaWindow':
+            #return obj
+    #raise RuntimeError('Could not find MayaWindow instance')
 
 def _maya_web_window():
     """

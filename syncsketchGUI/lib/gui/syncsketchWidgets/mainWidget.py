@@ -18,8 +18,9 @@ import syncsketchGUI
 from syncsketchGUI.gui import parse_url_data, get_current_item_from_ids, set_tree_selection, update_target_from_tree, getReviewById
 from syncsketchGUI.lib.gui.icons import _get_qicon
 from syncsketchGUI.lib.gui.literals import DEFAULT_VIEWPORT_PRESET, PRESET_YAML, VIEWPORT_YAML, DEFAULT_PRESET, uploadPlaceHolderStr, message_is_not_loggedin, message_is_not_connected
-from syncsketchGUI.lib.async import Worker, WorkerSignals
 from syncsketchGUI.installScripts.maintenance import getLatestSetupPyFileFromLocal, getVersionDifference
+from syncsketchGUI.lib.a_sync import Worker, WorkerSignals
+
 USER_ACCOUNT_DATA = None
 
 class MenuWindow(SyncSketch_Window):
@@ -922,7 +923,7 @@ class MenuWindow(SyncSketch_Window):
         format_preset_file = path.get_config_yaml(PRESET_YAML)
         data = database._parse_yaml(yaml_file = format_preset_file)
         logger.info("data: {}".format(data))
-        if data.has_key(val):
+        if val in data:
             data = data[val]
             #text = "%s | %s | %sx%s " %(data["encoding"], data["format"], data["width"], data["height"])
             text = "{} | {} | {}x{}".format(data["encoding"], data["format"], data["width"], data["height"])
@@ -994,7 +995,7 @@ class MenuWindow(SyncSketch_Window):
 
         # Update the last recorded file and save the ui state
         # To do - need to update and selc the target url when item is updated
-        if recordData.has_key('uploaded_item'):
+        if 'uploaded_item' in recordData:
             logger.info("uploaded_item %s"%recordData["uploaded_item"]["id"])
 
         #self.restore_ui_state()

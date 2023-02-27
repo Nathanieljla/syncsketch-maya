@@ -167,39 +167,73 @@ def capture(camera=None,
                             height=height + padding,
                             off_screen=off_screen) as panel:
         cmds.setFocus(panel)
-        with contextlib.nested(
-             _disabled_inview_messages(),
-             _maintain_camera(panel, camera),
-             _applied_viewport_options(viewport_options, panel),
-             _applied_camera_options(camera_options, panel),
-             _applied_display_options(display_options),
-             _applied_viewport2_options(viewport2_options),
-             _isolated_nodes(isolate, panel),
-             _maintained_time()):
-                try:
-                    output = cmds.playblast(
-                        compression=compression,
-                        format=format,
-                        percent=100,
-                        quality=quality,
-                        viewer=viewer,
-                        startTime=start_frame,
-                        endTime=end_frame,
-                        offScreen=off_screen,
-                        showOrnaments=show_ornaments,
-                        forceOverwrite=overwrite,
-                        filename=filename,
-                        widthHeight=[width, height],
-                        rawFrameNumbers=raw_frame_numbers,
-                        framePadding=frame_padding,
-                        **playblast_kwargs)
-                except RuntimeError as e:
-                        #This is a naive guess, but usually only happens if Quicktime libraries are missing
-                        title = 'Quicktime not found on this machine,'
-                        message = 'You can choose avi from the presets, which we will automatically convert for you into a mov'
-                        qt_widgets.WarningDialog(None, title, message)
 
-
+        #python 2.7 contextlib.nested ()
+        #with contextlib.nested(
+             #_disabled_inview_messages(),
+             #_maintain_camera(panel, camera),
+             #_applied_viewport_options(viewport_options, panel),
+             #_applied_camera_options(camera_options, panel),
+             #_applied_display_options(display_options),
+             #_applied_viewport2_options(viewport2_options),
+             #_isolated_nodes(isolate, panel),
+             #_maintained_time()):
+                #try:
+                    #output = cmds.playblast(
+                        #compression=compression,
+                        #format=format,
+                        #percent=100,
+                        #quality=quality,
+                        #viewer=viewer,
+                        #startTime=start_frame,
+                        #endTime=end_frame,
+                        #offScreen=off_screen,
+                        #showOrnaments=show_ornaments,
+                        #forceOverwrite=overwrite,
+                        #filename=filename,
+                        #widthHeight=[width, height],
+                        #rawFrameNumbers=raw_frame_numbers,
+                        #framePadding=frame_padding,
+                        #**playblast_kwargs)
+                #except RuntimeError as e:
+                        ##This is a naive guess, but usually only happens if Quicktime libraries are missing
+                        #title = 'Quicktime not found on this machine,'
+                        #message = 'You can choose avi from the presets, which we will automatically convert for you into a mov'
+                        #qt_widgets.WarningDialog(None, title, message)
+                        
+        #In Python 2.7 and later, nested() is deprecated because the with statement supports nesting directly.
+        
+        output = None
+        with _disabled_inview_messages(), \
+            _maintain_camera(panel, camera),\
+            _applied_viewport_options(viewport_options, panel), \
+            _applied_camera_options(camera_options, panel), \
+            _applied_display_options(display_options), \
+            _applied_viewport2_options(viewport2_options), \
+            _isolated_nodes(isolate, panel), \
+            _maintained_time():
+            try:
+                output = cmds.playblast(
+                    compression=compression,
+                    format=format,
+                    percent=100,
+                    quality=quality,
+                    viewer=viewer,
+                    startTime=start_frame,
+                    endTime=end_frame,
+                    offScreen=off_screen,
+                    showOrnaments=show_ornaments,
+                    forceOverwrite=overwrite,
+                    filename=filename,
+                    widthHeight=[width, height],
+                    rawFrameNumbers=raw_frame_numbers,
+                    framePadding=frame_padding,
+                    **playblast_kwargs)
+            except RuntimeError as e:
+                    #This is a naive guess, but usually only happens if Quicktime libraries are missing
+                    title = 'Quicktime not found on this machine,'
+                    message = 'You can choose avi from the presets, which we will automatically convert for you into a mov'
+                    qt_widgets.WarningDialog(None, title, message)
 
         return output
 
@@ -372,7 +406,7 @@ def apply_view(panel, **options):
 
     # Display options
     display_options = options.get("display_options", {})
-    for key, value in display_options.iteritems():
+    for key, value in display_options.items():
         if key in _DisplayOptionsRGB:
             cmds.displayRGBColor(key, *value)
         else:
@@ -380,16 +414,16 @@ def apply_view(panel, **options):
 
     # Camera options
     camera_options = options.get("camera_options", {})
-    for key, value in camera_options.iteritems():
+    for key, value in camera_options.items():
         cmds.setAttr("{0}.{1}".format(camera, key), value)
 
     # Viewport options
     viewport_options = options.get("viewport_options", {})
-    for key, value in viewport_options.iteritems():
+    for key, value in viewport_options.items():
         cmds.modelEditor(panel, edit=True, **{key: value})
 
     viewport2_options = options.get("viewport2_options", {})
-    for key, value in viewport2_options.iteritems():
+    for key, value in viewport2_options.items():
         attr = "hardwareRenderingGlobals.{0}".format(key)
         cmds.setAttr(attr, value)
 
@@ -637,14 +671,14 @@ def _applied_camera_options(options, panel):
                              "for capture: %s" % opt)
             options.pop(opt)
 
-    for opt, value in options.iteritems():
+    for opt, value in options.items():
         cmds.setAttr(camera + "." + opt, value)
 
     try:
         yield
     finally:
         if old_options:
-            for opt, value in old_options.iteritems():
+            for opt, value in old_options.items():
                 cmds.setAttr(camera + "." + opt, value)
 
 
@@ -730,14 +764,14 @@ def _applied_viewport2_options(options):
             options.pop(opt)
 
     # Apply settings
-    for opt, value in options.iteritems():
+    for opt, value in options.items():
         cmds.setAttr("hardwareRenderingGlobals." + opt, value)
 
     try:
         yield
     finally:
         # Restore previous settings
-        for opt, value in original.iteritems():
+        for opt, value in original.items():
             cmds.setAttr("hardwareRenderingGlobals." + opt, value)
 
 
@@ -777,7 +811,7 @@ def _maintain_camera(panel, camera):
     try:
         yield
     finally:
-        for camera, renderable in state.iteritems():
+        for camera, renderable in state.items():
             cmds.setAttr(camera + ".rnd", renderable)
 
 
