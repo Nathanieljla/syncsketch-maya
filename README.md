@@ -2,6 +2,8 @@
 
 #### This fork leverages supports python3 and Maya's module system to keep syncSketch specific content isolated and easier to manage.
 
+#### A thorough testing of this is still needed, however basic functionality seems to be working without issues.
+
 #### The Maya plug-in is not currently compatible with versions 2020 or older.  2022 hasn't been tested, but it should work. We plan to update our architecture to support it but we do not yet have a schedule for the release. 
 
 This is a fork. Please see https://github.com/syncsketch/syncsketch-maya for more info.
