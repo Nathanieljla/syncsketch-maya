@@ -1,6 +1,13 @@
 from syncsketchGUI.lib import path
 from syncsketchGUI.vendor.Qt import QtGui
-import urllib
+
+try:
+    #python 2
+    from urllib import URLopener
+except:
+    #python 3
+    from urllib.request import URLopener
+    
 import tempfile
 
 
@@ -20,7 +27,7 @@ def _get_qicon_from_url(url):
     Get logo path and return a QtGui.QIcon object
     '''
 
-    testfile = urllib.URLopener()
+    testfile = URLopener()
     tmpname = tempfile.NamedTemporaryFile(delete=False)
     try:
         thumb = testfile.retrieve(url, tmpname.name)

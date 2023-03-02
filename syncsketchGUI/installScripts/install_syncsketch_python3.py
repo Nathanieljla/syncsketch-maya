@@ -17,7 +17,6 @@ import importlib
 from functools import partial
 import site
 
-
 try:
     import maya.utils
     import maya.cmds
@@ -27,14 +26,12 @@ try:
     from PySide2.QtWidgets import *
     from PySide2.QtGui import *
     from shiboken2 import wrapInstance
-    
     MAYA_RUNNING = True
 except ImportError:
     MAYA_RUNNING = False
 
 
 CONTEXT = None
-
 
 versionTag = os.getenv('SS_DEV') or 'release'
 INSTALL_SSGUI_ONLY = False #Install syncsketch GUI only
@@ -155,6 +152,12 @@ class Application_context(object):
 
     def get_ui_parent(self):
         return None
+ 
+    """
+    return a thread for running the install process
+    """
+    def get_install_thread(self):
+        None
                 
     """
     run any logic to prepare your system for the install
@@ -179,7 +182,7 @@ class Maya_context(object):
     MODULE_VERSION = 1.0
     
     SYNCSKETCH_PY_API_RELEASE_PATH = 'https://github.com/syncsketch/python-api/archive/v1.0.7.8.zip'   
-    SYNCSKETCH_PY2_GUI_RELEASE_PATH = 'https://github.com/syncsketch/syncsketch-maya/archive/{}.zip'.format(versionTag)
+    SYNCSKETCH_GUI_RELEASE_PATH = 'https://github.com/syncsketch/syncsketch-maya/archive/{}.zip'.format(versionTag)
  
     def __init__(self, *args, **kwargs):
         super(Maya_context, self).__init__(*args, **kwargs)
@@ -199,7 +202,12 @@ class Maya_context(object):
         
         if self.max > 2:
             self.module_root = os.path.join(self.MODULE_NAME, 'common')
-            Maya_context.SYNCSKETCH_PY2_GUI_RELEASE_PATH  = 'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/tags/v1.3.0-alpha.zip'
+            Maya_context.SYNCSKETCH_PY2_GUI_RELEASE_PATH  = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/tags/v1.3.3-alpha.zip'
+            
+            dev_path = r'C:\Users\natha\Documents\syncsketch-maya'
+            if os.path.exists(dev_path):
+                Maya_context.SYNCSKETCH_GUI_RELEASE_PATH  = r'git+file:///{0}'.format(dev_path)
+
         else:
             self.version_specific = True
             self.module_root = os.path.join(self.MODULE_NAME, 'platforms', str(self.version), 
@@ -284,9 +292,9 @@ class Maya_context(object):
         
         return True
     
-    
     def get_install_thread(self):
         return Maya_install_thread()
+    
     
     """
     Runs the install in a non-threaded manner.  Mainly here for debugging with WING-IDE
@@ -302,11 +310,17 @@ class Maya_context(object):
             uninstall_shelf()
             install_shelf()
 
-
         #Load Plugin And Autoload it
-        maya.cmds.loadPlugin('SyncSketchPlugin')
-        maya.cmds.pluginInfo('SyncSketchPlugin',  edit=True, autoload=True)
-
+        if self.plugins_dir not in os.environ['MAYA_PLUG_IN_PATH']:
+            print('plug-in dir:{0}'.format(self.plugins_dir))
+            os.environ['MAYA_PLUG_IN_PATH'] += r';{0}'.format(self.plugins_dir)
+        
+        try:
+            maya.cmds.loadPlugin('SyncSketchPlugin')
+            maya.cmds.pluginInfo('SyncSketchPlugin',  edit=True, autoload=True)
+        except Exception as e:
+            print('FAILED to load plug-in:{0}'.format(e))
+            
         #Create Default's for current OS
         self.createGoodDefaults()
 
@@ -316,11 +330,11 @@ class Maya_context(object):
         '''
         import yaml
         print('sscache: {0}'.format(self.scripts_dir))
-        syncsketch_cache = os.path.join(self.scripts_dir, 'config', 'syncsketch_cache.yaml')
+        syncsketch_cache = os.path.join(self.scripts_dir, 'syncsketchGUI', 'config', 'syncsketch_cache.yaml')
         print('sscache: {0}'.format(syncsketch_cache))
 
         with open(syncsketch_cache, 'r') as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(f)
 
         if self.platform == Platforms.OSX:
             config['current_preset'] = 'HD720p (OSX)'
@@ -329,7 +343,7 @@ class Maya_context(object):
         print(config)
 
         with open(syncsketch_cache, 'w') as f:
-            yaml.dump(config, f)
+            yaml.safe_dump(config, f)
     
     
 if MAYA_RUNNING:
@@ -338,12 +352,27 @@ if MAYA_RUNNING:
     
         def __init__(self):
             QThread.__init__(self)
+            self.install_failed = False
     
         def __del__(self):
             self.wait()
     
         def run(self):
             self.startInstallationProcess()
+            
+            
+        def run_shell_command(self, cmd, description):
+            #NOTE: don't use subprocess.check_output(cmd), because in python 3.6+ this error's with a 120 code.
+            print('\nInstalling : {0}'.format(description))
+            print('Calling shell command: {0}'.format(cmd))
+
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = proc.communicate()
+            print(stdout)
+            print(stderr)
+            if proc.returncode:
+                raise Exception('install Failed:\nreturn code {0}:\nstderr:{1}\n'.format(proc.returncode, stderr))
+
     
         def startInstallationProcess(self):
             tmpdir = None
@@ -371,8 +400,7 @@ if MAYA_RUNNING:
                         
                     if CONTEXT.platform == Platforms.OSX:
                         cmd = 'curl https://bootstrap.pypa.io/pip/{0}/get-pip.py -o {1}'.format(pip_folder, pipInstaller).split(' ')
-                        print('Calling shell command: {0}'.format(cmd))
-                        print(subprocess.check_output(cmd))
+                        self.run_shell_command(cmd, 'get-pip')
     
                     else:
                         # this should be using secure https, but we should be fine for now
@@ -384,55 +412,29 @@ if MAYA_RUNNING:
                             f.write(data)
     
                     # Install pip
-                    # On Linux installing pip with Maya Python creates unwated dependecies to Mayas Python version, so pip might not work 
+                    # On Linux installing pip with Maya Python creates unwanted dependencies to Mayas Python version, so pip might not work 
                     # outside of Maya Python anymore. So lets install pip with the os python version. 
                     filepath, filename = os.path.split(pipInstaller)
                     sys.path.insert(0, filepath)
-                    
-                    ##pip_version = '23.0.1'
-                    ##if CONTEXT.max < 3:
-                        ##pip_version = '19.2.3'
-                        
-                    ##pip_version = pip.__version__
-                    
-                    #TODO:  I removed the specific pip version information. Determine why they did '19.2.3'
-                    #if CONTEXT.platform == Platforms.OSX or CONTEXT.platform == Platforms.LINUX:
-                        #python_str = 'python{0}'.format(py_version)
-                        #cmd = '{0} {1} --user pip=={2}'.format(python_str, pipInstaller, pip_version).split(' ')
-                    #else:
-                        #cmd = '{0}&{1}&--user&pip=={2}'.format(CONTEXT.python_path, pipInstaller, pip_version).split('&')
-                        
+                                        
+                    #TODO:  I removed the specific pip version information. Determine why they did '19.2.3'                        
                     if CONTEXT.platform == Platforms.OSX or CONTEXT.platform == Platforms.LINUX:
                         python_str = 'python{0}'.format(py_version)
                         cmd = '{0} {1} --user pip'.format(python_str, pipInstaller).split(' ')
                     else:
-                        cmd = '{0}&{1}&--user&pip'.format(CONTEXT.python_path, pipInstaller).split('&')                        
-                    print('Calling shell command for pip: {0}'.format(cmd))
-    
-                    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    stdout, stderr = proc.communicate()
-                    if proc.returncode:
-                        raise Exception('Failed to install Pip: {}'.format(stderr))
+                        cmd = '{0}&{1}&--user&pip'.format(CONTEXT.python_path, pipInstaller).split('&')
+                     
+                    self.run_shell_command(cmd, 'pip')   
     
                     # Install Dependencies 
                     # What are these dependencies for if they're not being installed into the Maya module?
                     # They seem to be a lot of duplicates of what syncSketchGUI installs into the Maya module. Is this even necessary?
                     cmd = '{0}&install&--force-reinstall&--user&{1}&setuptools&pyyaml&requests[security]'.format(CONTEXT.pip_path,
                                                                                                        CONTEXT.SYNCSKETCH_PY_API_RELEASE_PATH).split('&')
-                    print('\nAbout to install syncsketh lib and related dependencies')
-                    print('Calling shell command: {0}'.format(cmd))
-                    try:      
-                        print(subprocess.check_output(cmd))
-                    except Exception as e:
-                        print('syncSketch errored.  Your install might not complete as intended.')
-                        print(e)
-                        
-                    print('\nInstall FFMPEG Binaries to {}'.format(CONTEXT.ffmpeg_dir))
-                    FFmpeg.downloadFFmpegToDisc(platform=CONTEXT.platform, moveToLocation=CONTEXT.ffmpeg_dir)
-                    print('Finished Installing FFMPEG Binaries')                    
-    
+                    self.run_shell_command(cmd, 'syncSketch lib and dependencies')
+                    
+                    # This needs to exist before we attempt to install ffmpeg
                     # User Site Package Path needs to be in sys.paths, in order to load installed dependencies. 
-                    # In case this folder didnt exist before installation, it might not be in system paths.
                     site_package_path = site.getusersitepackages()
                     if not site_package_path:
                         print('Can not find user site package path')
@@ -440,23 +442,35 @@ if MAYA_RUNNING:
                         sys.path.append(site_package_path)
                         print('Add site package path [{}] to system paths'.format(site_package_path))
                     else:
-                        print('Site packe path in system paths')    
+                        print('Site packe path in system paths')
+                        
+                    site_base = site.getuserbase()
+                    if site_base not in sys.path:
+                        print('adding user base')
+                        sys.path.append(site_base)
+                     
+                    print('\nInstall FFMPEG Binaries to {}'.format(CONTEXT.ffmpeg_dir))
+                    FFmpeg.downloadFFmpegToDisc(platform=CONTEXT.platform, moveToLocation=CONTEXT.ffmpeg_dir)
+                    print('Finished Installing FFMPEG Binaries')                    
+    
     
                 ##2.-Install SyncsketchGUI
+                #this might be a re-install, so lets try unloading the plug-in to be clean
+                try:                    
+                    maya.cmds.unloadPlugin('SyncSketchPlugin')
+                except Exception as e:
+                    print(e)
+                
                 # * By using target, pip show won't find this package anymore
                 if os.path.isdir(CONTEXT.syncsketch_install_dir):
                     shutil.rmtree(CONTEXT.syncsketch_install_dir, ignore_errors=True)
                     # todo: delete as well SyncsketchGUI-1.0.0.dist-info
                     print('Deleting previous directory for a clean install {0} '.format(CONTEXT.syncsketch_install_dir))
     
-                cmd = '{0}&install&{1}&--upgrade&--target={2}'.format(CONTEXT.pip_path, CONTEXT.SYNCSKETCH_PY2_GUI_RELEASE_PATH,
+                cmd = '{0}&install&{1}&--upgrade&--target={2}'.format(CONTEXT.pip_path, CONTEXT.SYNCSKETCH_GUI_RELEASE_PATH,
                                                                      CONTEXT.scripts_dir).split('&')
-                print('\nAbout to install syncSketch_GUI and related dependecies')
-                print('Calling shell command: {0}'.format(cmd))
-                try:
-                    print(subprocess.check_output(cmd))
-                except Exception as e:
-                    print('syncSketch install errored.  Your install might not complete as intended.')
+                
+                self.run_shell_command(cmd, 'syncSketch GUI and Dependencies')
 
                 # Our scripts folder won't be seen by Maya until Maya restarts (and reads the module data)
                 #so manually add it to sys.path
@@ -469,9 +483,14 @@ if MAYA_RUNNING:
                 fromSource = os.path.join(CONTEXT.syncsketch_install_dir, 'SyncSketchPlugin.py')
                 toTarget = os.path.join(CONTEXT.plugins_dir, 'SyncSketchPlugin.py')
                 print('Copy From : {} to: {}'.format(fromSource, toTarget))
-                shutil.copy(fromSource, toTarget)
+                try:
+                    shutil.copy(fromSource, toTarget)
+                except Exception as e:
+                    print('copying plug-in failed')
+                    raise e
     
             except Exception as e:
+                self.install_failed = True
                 print(e)
     
             finally:
@@ -540,7 +559,7 @@ class Ressources(object):
     base64Image = '''iVBORw0KGgoAAAANSUhEUgAAAFgAAABYCAYAAABxlTA0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEwAACxMBAJqcGAAAA7lJREFUeJztm8tx2zAQhv9lA3YHdiqwO4iGpM5xB6Y7UAdRKohSQeQO5DMfo3Qgd6B0IDfAzSHgjOwhJQDCgvTMfleCXPIbEI8FACiKoiiKoiiKoiiKoiiKoiiKoiiKoijKECT14LqubwAUzDwDACLatW27nM/nb1IxbWia5o6ZF8x8a95rT0SrNE1fJeKJCK7r+ieARc+ldZZlTxIxbSjL8oqItkR0//EaEd1LSA4u2NSQ3Yki67ZtF7Frcl3XN8y86ZNr2GdZ9iV03CT0A5n54UyRgoi2ZVlehY49RNM0dwB2J+QCwK1EbAnBh3NliOg+lmTzR20BXEvH6iO44CRJtjblYkh2kXumWfMmuOA0TV+ZeWNTlojukyTZm184KFVVPRpptjV3HfodAAHBAMDMhUONuGbmbUjJVVU9EtHa4ZZ1nue/QsU/RkTwfD5/Y+aZ+T1tCCbZQ+5KcugoNtHoqOv6N4DCsviBmRd5nj97xhoaf/fCzIVvLFvEBQPOkr0+PEYMH6IIBmQFTFUuEFEw4NU+LrMs+zF00Ux910R0bnLTcSCimVTeoY+oggG/Hr6vEzqVVxggulxgBMHA5ZI/i1xgJMEA0DTNVzMhsZ4ItG27SJLk+kzS5h3MvCOihyzL/vq/rT+jCQbc8wRG1q1LeWaejZmDHlUwIJeMmYJcQGgm50Kapq9ENAuZbGHmzRTkAhOowR0eHdcQo66afGQygoEgkiclF5hAE3GMR5LoGNGkjS+TEgz8l0xEW8fbDh73RGFSTQTgnlc4JmaOwZZJCb5EbsfUJE9CcFmWV0mSrHCh3A6TUxZZoXBldMEBh2cfmcSIYtROzidp4/D4wjQ5ozKaYFe5Jg8xM7lfW9GjSx6lifBJ8hxPfS+9PybRBYeS81kkR20iPKRsh6R0SSIAe5tnxdyu9S5urEBmFWMFhwS7zSjAo6PcE9FDrNWNKIJDrcMNMeUlJHHB0nI7pipZVHBd198BLG3Lh5jmuu4kIqIiTdOXS2KeQvKMxmibQaa0EUVEsGuzIPGBrpJNxxe8JosM04hoaVn0QEQzidqTZdkTM1tvBGzbdhn6HQABwVVVPcLuvEPXyfwJ/Q4deZ7/YubCpqxAsgmAgGCzb+Ec0YZJeZ4/20qWQELwyeMDXdIm5jamPM+fLZJEe4nYImc0AKz6rnX5gDH2iKVp+mKm1n2S9w47NJ0QG6Y1TfOtbdvjTmbNzJuxN4P0HPHdj3EwUlEURVEURVEURVEURVEURVEURVEURVGAf9l4XANGvwF5AAAAAElFTkSuQmCC'''
     closeIcon = QPixmap(Icon(base64Image).base64ToQPixmap())
    
-   
+##Seems to be a mixin class, but I'm removing for simplicity sake. 
 #class UIDesktop(object):
     #def __init__(self, name, size=[300, 300], *args, **kwargs):
         #self.setObjectName(name)
@@ -662,11 +681,16 @@ class installerUI(QWidget): #, UIDesktop):
 
 
     def done(self):
+
         self.launchButton.show()
         self.closeButton.hide()
         self.animatedGif.hide()
         self.waitLabel.hide()
 
+        if self.install_thread.install_failed:
+            print('Install FAILED! See output.')
+            return
+                
         if InstallOptions.upgrade == 1:
             restoreCredentialsFile()
             self.upgradeInfo.setText('Upgrade Successful')
@@ -677,8 +701,7 @@ class installerUI(QWidget): #, UIDesktop):
             
         CONTEXT.post_install()
         ## Add TimeLineMenu's if they doesn't exist
-
-
+        
     def __syncsketchInstall(self):
         print('installing')   
         self.installButton.hide()
@@ -688,9 +711,9 @@ class installerUI(QWidget): #, UIDesktop):
         self.waitLabel.show()
         
         if CONTEXT.pre_install():
-            self.myThread = CONTEXT.get_install_thread()
-            self.connect(self.myThread, SIGNAL('finished()'), self.done)
-            self.myThread.start()
+            self.install_thread = CONTEXT.get_install_thread()
+            self.connect(self.install_thread, SIGNAL('finished()'), self.done)
+            self.install_thread.start()
 
     def __closeButton(self):
         self.clean()
@@ -914,4 +937,8 @@ def onMayaDroppedPythonFile(*args):
 Run is a function used by WingIDE to execute code after telling Maya to import the module
 """
 def Run():
+    main(True)
+    
+
+if __name__ == "__main__":
     main(True)
