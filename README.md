@@ -5,7 +5,7 @@
 
 #### A thorough testing of this is still needed, however basic functionality seems to be working without issues.
 
-#### The Maya plug-in is not currently compatible with versions 2020 or older.  2022 hasn't been tested, but it should work. I plan to update the architecture to support python 2.7 builds, but I'm not sure how soon that will be. 
+#### The Maya plug-in is not currently compatible with versions 2020 or older. I plan to update the architecture to support python 2.7 builds, but I'm not sure how soon that will be. 
 
 This is a fork. Please see https://github.com/syncsketch/syncsketch-maya for more info.
 
