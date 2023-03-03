@@ -9,10 +9,7 @@
 This is a fork. Please see https://github.com/syncsketch/syncsketch-maya for more info.
 
 Known Issues:
-
-1. Plug-in isn't auto-loading after install. Users have to manually load. Restart Maya for the plug-in to appear in the list or use the plug-in manager load the plug-in from the user's maya directory. E.g. for windows : documents/maya/modules/syncSketch/common/plug-ins
-2. subprocess.Popen calls are returning a exit code of 120. However all the modules being downloaded from the command seem to be installed. I.e. no harm no foul?
-3. The module defition file currently gets replaced with the last syncSketch installation vs. appending/updating existing information.  If all your versions of Maya are in python3, this shouldn't be an issue.
+1. The module defition file currently gets replaced with the last syncSketch installation vs. appending/updating existing information.  If all your versions of Maya are in python3, this shouldn't be an issue.
 
 
 # Installation
