@@ -1,4 +1,5 @@
 ![maya2023](https://img.shields.io/badge/Maya2023-tested-brightgreen.svg)
+![maya2023](https://img.shields.io/badge/Maya2022-tested-brightgreen.svg)
 
 #### This fork supports python3 and Maya's module system to keep syncSketch specific content isolated and easier to manage.
 
