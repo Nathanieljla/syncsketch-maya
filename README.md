@@ -9,7 +9,7 @@
 This is a fork. Please see https://github.com/syncsketch/syncsketch-maya for more info.
 
 Known Issues:
-1. The module defition file currently gets replaced with the last syncSketch installation vs. appending/updating existing information.  If all your versions of Maya are in python3, this shouldn't be an issue.
+1. The module definition file currently gets replaced with the last syncSketch installation vs. appending/updating existing information.  If all your versions of Maya are in python3, this shouldn't be an issue.
 
 
 # Installation
