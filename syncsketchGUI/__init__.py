@@ -1,4 +1,4 @@
-from syncsketchGUI.installScripts import installGui
+from syncsketchGUI.installScripts import install_syncsketch_python3 as installGui
 from syncsketchGUI.installScripts.maintenance import getVersionDifference
 import importlib
 import os

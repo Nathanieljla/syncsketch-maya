@@ -918,16 +918,6 @@ def main(install = False):
         print('No context found')
         return       
     
-    #global CONTEXT
-    #if MAYA_RUNNING:
-        #CONTEXT = Maya_context()
-    
-    #if CONTEXT is None:
-        #return
-    
-    #if install:
-        #if CONTEXT.pre_install():
-            #CONTEXT.install()
            
 
 def onMayaDroppedPythonFile(*args):
