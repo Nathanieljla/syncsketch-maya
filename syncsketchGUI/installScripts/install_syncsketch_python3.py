@@ -202,7 +202,7 @@ class Maya_context(object):
         
         if self.max > 2:
             self.module_root = os.path.join(self.MODULE_NAME, 'common')
-            Maya_context.SYNCSKETCH_PY2_GUI_RELEASE_PATH  = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/tags/v1.3.3-alpha.zip'
+            Maya_context.SYNCSKETCH_GUI_RELEASE_PATH  = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/heads/master.zip'
             
             dev_path = r'C:\Users\natha\Documents\syncsketch-maya'
             if os.path.exists(dev_path):
