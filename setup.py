@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'SyncsketchGUI',
-    version = '1.3.3',
+    version = '1.3.4',
     url = 'https://github.com/Nathanieljla/syncsketch-maya.git',
     author = '3D CG Guru',
     author_email = "developer@3dcg.guru",
