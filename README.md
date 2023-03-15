@@ -18,7 +18,7 @@ Known Issues:
 ### Drag & Drop
 
 The easiest way to install this application is to ...
-1. Click this File Link > [install_syncketch_python3.py](https://github.com/Nathanieljla/syncsketch-maya/releases/download/v1.3.3-alpha/install_syncsketch_python3.py#install) < to download the installation python file.
+1. Click this File Link > [install_syncketch_python3.py](https://github.com/Nathanieljla/syncsketch-maya/releases/download/v1.3.4-alpha/install_syncsketch_python3.py#install) < to download the installation python file.
 2. Drag drop it from the browser into a maya-viewport. 
 This will automatically install all the dependencies without requiring admin priviliges into your user-directory.
 3. Hit 'Install' and on Allow this process to run python (hit 'Allow' in the popup)
