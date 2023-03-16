@@ -245,6 +245,8 @@ def apply_greasepencil(filename, clear_existing_frames=False):
     active_panel = get_active_editor()
     cmds.modelEditor(active_panel, edit=True, greasePencils=True)
 
+    #TODO: greasePencil has been replaced with "blue pencil "in Maya 2023
+    #look into how to re-create same behavior with new system.
     pm.greasePencilCtx(ctxName, edit = True, importArchive =  filename )
 
 
