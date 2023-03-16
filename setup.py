@@ -9,7 +9,7 @@ setup(
     description = "Syncsketch GUI for Autodesk Maya with python 3.x",
     packages = find_packages(),
     include_package_data = True,
-    python_requires='>=3',
+    python_requires='>=2',
     package_data = {'syncsketchGUI.config': ['*.yaml']},
     install_requires = [
           "requests",
