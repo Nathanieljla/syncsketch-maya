@@ -259,8 +259,11 @@ def apply_imageplane(filename, camera=None):
         ssCamera = list(filter((lambda x: x if "Shape" in x else None), cmds.ls(camera, dag=True)))[0]
 
     imagePlane = cmds.imagePlane(camera=ssCamera)
-    cmds.setAttr("{}.type".format(imagePlane[1], 2), 2)
     cmds.setAttr("{}.imageName".format(imagePlane[1], 2), filename, type='string')
+    #we have to set "useFrameExtension" BEFORE setting the type to movie.
+    result =  "{}.useFrameExtension".format(imagePlane[1])
+    cmds.setAttr(result, 1)
+    cmds.setAttr("{}.type".format(imagePlane[1], 2), 2)
 
 
 
