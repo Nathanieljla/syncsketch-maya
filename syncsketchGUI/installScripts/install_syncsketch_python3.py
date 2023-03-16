@@ -1,13 +1,20 @@
 import os
 import re
-import enum
+
 import platform
 import sys
 import webbrowser
 #import math
 #from datetime import datetime, timedelta
 import glob
-from urllib.request import urlopen
+
+try:
+    #python3
+    from urllib.request import urlopen
+except:
+    #python2
+    from urllib import urlopen
+    
 import tempfile
 import shutil
 import sys
@@ -38,10 +45,19 @@ versionTag = os.getenv('SS_DEV') or 'release'
 INSTALL_SSGUI_ONLY = False #Install syncsketch GUI only
 
 
-class Platforms(enum.Enum):
+class Platforms(object):
     OSX = 0,
     LINUX = 1,
     WINDOWS = 2
+    
+    @staticmethod
+    def get_name(enum_value):
+        if enum_value == Platforms.OSX:
+            return 'osx'
+        elif enum_value == Platforms.LINUX:
+            return 'linux'
+        else:
+            return 'windows'
     
     
 class FFmpeg(object):
@@ -300,8 +316,8 @@ class Maya_context(object):
     MODULE_NAME = 'syncSketch'
     MODULE_VERSION = 1.0
     
-    SYNCSKETCH_PY_API_RELEASE_PATH = 'https://github.com/syncsketch/python-api/archive/v1.0.7.8.zip'   
-    SYNCSKETCH_GUI_RELEASE_PATH = 'https://github.com/syncsketch/syncsketch-maya/archive/{}.zip'.format(versionTag)
+    SYNCSKETCH_PY_API_RELEASE_PATH = r'https://github.com/syncsketch/python-api/archive/v1.0.7.8.zip'   
+    SYNCSKETCH_GUI_RELEASE_PATH = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/tags/v1.3.5-alpha.zip' #'https://github.com/syncsketch/syncsketch-maya/archive/{}.zip'.format(versionTag)
  
     def __init__(self, *args, **kwargs):
         super(Maya_context, self).__init__(*args, **kwargs)
@@ -319,20 +335,19 @@ class Maya_context(object):
         self.app_dir = os.getenv('MAYA_APP_DIR')
         self.install_root = os.path.join(self.app_dir, 'modules')
         
-        #If we're using Python 3 use Natahaniel's fork!
+        #Maya_context.SYNCSKETCH_GUI_RELEASE_PATH  = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/tags/v1.3.4-alpha.zip'
+        #Maya_context.SYNCSKETCH_GUI_RELEASE_PATH  = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/heads/master.zip'
+        
+        dev_path = r'C:\Users\natha\Documents\syncsketch-maya'
+        if os.path.exists(dev_path):
+            Maya_context.SYNCSKETCH_GUI_RELEASE_PATH  = r'git+file:///{0}'.format(dev_path)
+        
         if self.max > 2:
             self.module_root = os.path.join(self.MODULE_NAME, 'common')
-            Maya_context.SYNCSKETCH_GUI_RELEASE_PATH  = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/tags/v1.3.5-alpha.zip'
-            #Maya_context.SYNCSKETCH_GUI_RELEASE_PATH  = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/heads/master.zip'
-            
-            dev_path = r'C:\Users\natha\Documents\syncsketch-maya'
-            if os.path.exists(dev_path):
-                Maya_context.SYNCSKETCH_GUI_RELEASE_PATH  = r'git+file:///{0}'.format(dev_path)
-
         else:
             self.version_specific = True
             self.module_root = os.path.join(self.MODULE_NAME, 'platforms', str(self.version), 
-                                               self.platform.name.lower(),
+                                               Platforms.get_name(self.platform),
                                                'x64')
         #common locations
         self.module_dir = os.path.join(self.install_root, self.module_root)
@@ -352,7 +367,12 @@ class Maya_context(object):
         
         if self.platform == Platforms.WINDOWS:
             self.python_path = os.path.join(os.getenv('MAYA_LOCATION'), 'bin', 'mayapy.exe')
-            self.pip_path = os.path.join(os.getenv('APPDATA'), 'Python', 'Python{0}{1}'.format(self.max, self.min), 'Scripts', 'pip{0}.exe'.format(version_str))
+            if self.max > 2:
+                #python3 pip path
+                self.pip_path = os.path.join(os.getenv('APPDATA'), 'Python', 'Python{0}{1}'.format(self.max, self.min), 'Scripts', 'pip{0}.exe'.format(version_str))
+            else:
+                #python2 pip path
+                self.pip_path = os.path.join(os.getenv('APPDATA'), 'Python', 'Scripts', 'pip{0}.exe'.format(version_str))
 
         elif self.platform == Platforms.OSX:
             self.python_path = '/usr/bin/python'
@@ -367,7 +387,7 @@ class Maya_context(object):
         return int(str(maya.cmds.about(apiVersion=True))[:4])
     
     @staticmethod
-    def get_platform_string(platform : Platforms):
+    def get_platform_string(platform):
         if platform is Platforms.OSX:
             return 'mac'
         elif platform is Platforms.LINUX:
@@ -398,16 +418,16 @@ class Maya_context(object):
             platform_name = ''
           
         filename = os.path.join(self.install_root, (self.MODULE_NAME + '.mod'))  
-        python_path =  'PYTHONPATH+:={0}'.format(self.site_packages_dir.split('common\\')[1])
+        python_path =  'PYTHONPATH+:={0}'.format(self.site_packages_dir.split(self.module_dir)[1])
         relative_path = './{0}'.format(self.module_root)
         
         module_definition = Module_manager.Module_definition(self.MODULE_NAME, self.MODULE_VERSION,
-                                                             maya_version=maya_version, platform=platform_name, 
+                                                             maya_version=str(maya_version), platform=platform_name, 
                                                              module_path=relative_path,
                                                              defines=[python_path])            
         module_manager = Module_manager()
         module_manager.read_module_definitions(filename)
-        module_manager.remove_definitions(maya_version=maya_version, platform=platform_name)
+        module_manager.remove_definitions(maya_version=str(maya_version), platform=platform_name)
         module_manager.add_definition(module_definition)
         
         try:
@@ -542,12 +562,24 @@ if MAYA_RUNNING:
                     filepath, filename = os.path.split(pipInstaller)
                     sys.path.insert(0, filepath)
                                         
-                    #TODO:  I removed the specific pip version information. Determine why they did '19.2.3'                        
+                    #TODO: Determine why they did '19.2.3'
+                    #Why is there diffent split options based on OS?  Can't I just defin python_str
+                    #based on the platform and use a common split command?  Seems redundant.
                     if CONTEXT.platform == Platforms.OSX or CONTEXT.platform == Platforms.LINUX:
                         python_str = 'python{0}'.format(py_version)
-                        cmd = '{0} {1} --user pip'.format(python_str, pipInstaller).split(' ')
+                        if CONTEXT.max > 2:
+                            #Python3
+                            cmd = '{0} {1} --user pip'.format(python_str, pipInstaller).split(' ')
+                        else:
+                            #Python2
+                            cmd = '{0} {1} --user pip==19.2.3'.format(python_str, pipInstaller).split(' ')
                     else:
-                        cmd = '{0}&{1}&--user&pip'.format(CONTEXT.python_path, pipInstaller).split('&')
+                        if CONTEXT.max > 2:
+                            #Python3
+                            cmd = '{0}&{1}&--user&pip'.format(CONTEXT.python_path, pipInstaller).split('&')
+                        else:
+                            #Python2
+                            cmd = '{0}&{1}&--user&pip==19.2.3'.format(CONTEXT.python_path, pipInstaller).split('&')
                      
                     self.run_shell_command(cmd, 'pip')   
     
@@ -575,10 +607,14 @@ if MAYA_RUNNING:
                         sys.path.append(site_base)
                      
                     print('\nInstall FFMPEG Binaries to {}'.format(CONTEXT.ffmpeg_dir))
-                    FFmpeg.downloadFFmpegToDisc(platform=CONTEXT.platform, moveToLocation=CONTEXT.ffmpeg_dir)
-                    print('Finished Installing FFMPEG Binaries')                    
-    
-    
+                    try:
+                        FFmpeg.downloadFFmpegToDisc(platform=CONTEXT.platform, moveToLocation=CONTEXT.ffmpeg_dir)
+                        print('Finished Installing FFMPEG Binaries')   
+                    except Exception as e:
+                        #This seems to be failing in 2.7 installs
+                        print('Installation of ffmpeg Failed!:{0}'.format(e))
+                        
+                 
                 ##2.-Install SyncsketchGUI
                 #this might be a re-install, so lets try unloading the plug-in to be clean
                 try:                    
@@ -586,11 +622,11 @@ if MAYA_RUNNING:
                 except Exception as e:
                     print(e)
                 
-                # * By using target, pip show won't find this package anymore
-                if os.path.isdir(CONTEXT.syncsketch_install_dir):
-                    shutil.rmtree(CONTEXT.syncsketch_install_dir, ignore_errors=True)
-                    # todo: delete as well SyncsketchGUI-1.0.0.dist-info
-                    print('Deleting previous directory for a clean install {0} '.format(CONTEXT.syncsketch_install_dir))
+                ## * By using target, pip show won't find this package anymore
+                #if os.path.isdir(CONTEXT.syncsketch_install_dir):
+                    #shutil.rmtree(CONTEXT.syncsketch_install_dir, ignore_errors=True)
+                    ## todo: delete as well SyncsketchGUI-1.0.0.dist-info
+                    #print('Deleting previous directory for a clean install {0} '.format(CONTEXT.syncsketch_install_dir))
     
                 cmd = '{0}&install&{1}&--upgrade&--target={2}'.format(CONTEXT.pip_path, CONTEXT.SYNCSKETCH_GUI_RELEASE_PATH,
                                                                      CONTEXT.scripts_dir).split('&')
@@ -796,8 +832,6 @@ class installerUI(QWidget): #, UIDesktop):
         self.launchButton.clicked.connect(self.__launchButton)
 
 
-        
-        
     #def showit(self):
         #self.installButton.clicked.connect(self.__syncsketchInstall)
         #self.closeButton.clicked.connect(self.__closeButton)
@@ -839,6 +873,7 @@ class installerUI(QWidget): #, UIDesktop):
             self.install_thread = CONTEXT.get_install_thread()
             self.connect(self.install_thread, SIGNAL('finished()'), self.done)
             self.install_thread.start()
+            #CONTEXT.install()
 
     def __closeButton(self):
         self.clean()
@@ -966,7 +1001,6 @@ class installerUI(QWidget): #, UIDesktop):
 
 
                  
-                
                 
                     
 #class SyncSketchInstaller(QObject):
