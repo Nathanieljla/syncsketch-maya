@@ -425,7 +425,7 @@ class Maya_context(object):
           
         filename = os.path.join(self.install_root, (self.MODULE_NAME + '.mod'))  
         python_path =  'PYTHONPATH+:={0}'.format(self.site_packages_dir.split(self.module_dir)[1])
-        relative_path = './{0}'.format(self.module_root)
+        relative_path = '.\{0}'.format(self.module_root)
         
         module_definition = Module_manager.Module_definition(self.MODULE_NAME, self.MODULE_VERSION,
                                                              maya_version=str(maya_version), platform=platform_name, 
@@ -646,11 +646,7 @@ if MAYA_RUNNING:
                     print('Add scripts path [{}] to system paths'.format(CONTEXT.scripts_dir))
                 else:
                     print('scripts path in system paths')
-                    
-                #We also need to tell the syncSketch where the scripts path is
-                import syncsketchGUI.lib.user
-                syncsketchGUI.lib.user.MAYA_MODULE_PATH = CONTEXT.scripts_dir
-    
+                        
                 fromSource = os.path.join(CONTEXT.syncsketch_install_dir, 'SyncSketchPlugin.py')
                 toTarget = os.path.join(CONTEXT.plugins_dir, 'SyncSketchPlugin.py')
                 print('Copy From : {} to: {}'.format(fromSource, toTarget))
