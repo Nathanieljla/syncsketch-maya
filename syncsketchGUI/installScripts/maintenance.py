@@ -3,8 +3,15 @@ import syncsketchGUI
 import importlib
 import os
 
-from urllib.request import urlopen #import urllib2
+#import urllib2
+try:
+    #python3
+    from urllib.request import urlopen
+except:
+    #python2
+    from urllib import urlopen
 import sys
+
 
 import logging
 logger = logging.getLogger("syncsketchGUI")

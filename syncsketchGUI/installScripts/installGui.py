@@ -8,7 +8,12 @@ import glob
 
 #This was for python 2.7
 #import urllib2
-from urllib.request import urlopen
+try:
+    #python 2
+    from urllib import URLopener
+except:
+    #python 3
+    from urllib.request import URLopener
 
 import tempfile
 import shutil
