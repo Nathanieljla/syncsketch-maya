@@ -1,4 +1,5 @@
 import os
+import re
 import enum
 import platform
 import sys
@@ -121,6 +122,124 @@ def restoreCredentialsFile():
         current_user.set_api_key(InstallOptions.tokenData['token'])
         current_user.auto_login()
     
+   
+   
+
+class Module_manager(object):
+    """Used to edit .mod files quickly and easily."""
+    
+    MODULE_EXPRESSION = r"(?P<action>\+|\-)\s*(?P<module_name>\w+)\s*(MAYAVERION:(?P<maya_version>\d{4}))?\s*(PLATFORM:(?P<platform>\w+))?\s*(?P<module_version>\d+\.?\d*.?\d*)\s+(?P<module_path>.*)\n(?P<defines>(?P<define>.+(\n?))+)?"
+    
+    class Module_definition(object):
+        """A .mod file can have multiple entries.  Each definition equates to one entry"""
+        
+        def __init__(self, module_name, module_version,
+                     maya_version = '', platform = '',
+                     action = '+', module_path = '',
+                     defines = [],
+                     *args, **kwargs):
+            
+            self.action = action
+            self.module_name = module_name
+            self.module_version = module_version
+            
+            self.module_path = r'./{0}'.format(self.module_name)
+            if module_path:
+                self.module_path = module_path
+
+            self.maya_version = maya_version
+            if self.maya_version is None:
+                self.maya_version = ''
+            
+            self.platform = platform
+            if self.platform is None:
+                self.platform = ''
+            
+            self.defines = defines
+            if not self.defines:
+                self.defines = []
+            
+        def __str__(self):
+            return_string = '{0} {1} '.format(self.action, self.module_name)
+            if self.maya_version:
+                return_string += 'MAYAVERION:{0} '.format(self.maya_version)
+                
+            if self.platform:
+                return_string += 'PLATFORM:{0} '.format(self.platform)
+                
+            return_string += '{0} {1}\n'.format(self.module_version, self.module_path)
+            for define in self.defines:
+                if define:
+                    return_string += '{0}\n'.format(define.rstrip('\n'))
+             
+            return_string += '\n'    
+            return return_string
+    
+    
+    """Module Manager Init()"""    
+    def __init__(self):
+        self._module_definitions = []
+        
+    
+    def read_module_definitions(self, path):
+        self._module_definitions = []
+        if (os.path.exists(path)):
+            file = open(path, 'r')
+            text = file.read()
+            file.close()
+          
+            for result in re.finditer(Module_manager.MODULE_EXPRESSION, text):
+                resultDict = result.groupdict()
+                if resultDict['defines']:
+                    resultDict['defines'] = resultDict['defines'].split("\n")
+                    
+                definition = Module_manager.Module_definition(**resultDict)
+                self._module_definitions.append(definition)
+      
+                        
+    def write_module_definitions(self, path):
+        file = open(path, 'w')
+        for entry in self._module_definitions:
+            file.write(str(entry))
+        
+        file.close()
+
+                           
+    def __get_definitions(self, search_list, key, value):
+        results = []
+        for item in search_list:
+            if item.__dict__[key] == value:
+                results.append(item)
+                
+        return results
+        
+          
+    def _get_definitions(self, *args, **kwargs):
+        result_list = self._module_definitions
+        for i in kwargs:
+            result_list = self.__get_definitions(result_list, i, kwargs[i])
+        return result_list
+    
+    
+    def remove_definitions(self, *args, **kwargs):
+        """
+        removes all definitions that match the input argument values
+        returns the results that were removed from the manager.
+        
+        example : module_manager_instance.remove_definitions(module_name='generic', platform='win', maya_version='2023')
+        """ 
+        results = self._get_definitions(**kwargs)
+        for result in results:
+            self._module_definitions.pop(self._module_definitions.index(result))
+            
+        return results
+    
+    def add_definition(self, definition):
+        """
+        TODO: Add some checks to make sure the definition doesn't conflict with an existing definition
+        """
+        self._module_definitions.append(definition)
+   
     
     
 class Application_context(object):
@@ -191,7 +310,7 @@ class Maya_context(object):
         self.version = self.get_app_version()
         self.platform = Application_context.get_platform()
         
-        print('PythonVersion: {0}'.format(sys.version))
+        print('Python Version: {0}'.format(sys.version))
         self.max, self.min, self.patch = sys.version.split(' ')[0].split('.')
         self.max = int(self.max)
         self.min = int(self.min)
@@ -200,6 +319,7 @@ class Maya_context(object):
         self.app_dir = os.getenv('MAYA_APP_DIR')
         self.install_root = os.path.join(self.app_dir, 'modules')
         
+        #If we're using Python 3 use Natahaniel's fork!
         if self.max > 2:
             self.module_root = os.path.join(self.MODULE_NAME, 'common')
             Maya_context.SYNCSKETCH_GUI_RELEASE_PATH  = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/tags/v1.3.4-alpha.zip'
@@ -232,8 +352,6 @@ class Maya_context(object):
         
         if self.platform == Platforms.WINDOWS:
             self.python_path = os.path.join(os.getenv('MAYA_LOCATION'), 'bin', 'mayapy.exe')
-            #I thought I neeed to install this in python specific version, but maybe not, so removed from the path for now?
-            #'Python{0}{1}'.format(self.max, self.min),  
             self.pip_path = os.path.join(os.getenv('APPDATA'), 'Python', 'Python{0}{1}'.format(self.max, self.min), 'Scripts', 'pip{0}.exe'.format(version_str))
 
         elif self.platform == Platforms.OSX:
@@ -272,22 +390,28 @@ class Maya_context(object):
         except OSError:
             return False
 
+        maya_version = ''
         platform_name =  self.get_platform_string(Application_context.get_platform())
-        
-        version_info = '' 
         if self.version_specific:
-            version_info = 'MAYAVERSION:{0} PLATFORM:{1}'.format(self.version, platform_name)
+            maya_version = self.version
+        else:
+            platform_name = ''
+          
+        filename = os.path.join(self.install_root, (self.MODULE_NAME + '.mod'))  
+        python_path =  'PYTHONPATH+:={0}'.format(self.site_packages_dir.split('common\\')[1])
+        relative_path = './{0}'.format(self.module_root)
         
-        mod_str = '+ {0} {1} {2} .\\{3}\n'.format(version_info,self.MODULE_NAME,
-                                                  self.MODULE_VERSION, self.module_root)
+        module_definition = Module_manager.Module_definition(self.MODULE_NAME, self.MODULE_VERSION,
+                                                             maya_version=maya_version, platform=platform_name, 
+                                                             module_path=relative_path,
+                                                             defines=[python_path])            
+        module_manager = Module_manager()
+        module_manager.read_module_definitions(filename)
+        module_manager.remove_definitions(maya_version=maya_version, platform=platform_name)
+        module_manager.add_definition(module_definition)
         
-        mod_str += 'PYTHONPATH+:={0}\n'.format(self.site_packages_dir.split('common\\')[1])
-        #mod_str += 'plugins: ..{0}\n'.format(self.unique_plugin_dir.split(self.MODULE_NAME)[1])
-        filename = os.path.join(self.install_root, (self.MODULE_NAME + '.mod'))
         try:
-            mod_file = open(filename, 'w')
-            mod_file.write(mod_str)
-            mod_file.close()
+            module_manager.write_module_definitions(filename)
         except IOError:
             return False
         
@@ -305,7 +429,7 @@ class Maya_context(object):
         self.thread.startInstallationProcess() #start()
         
     def post_install(self):
-                # Install the Shelf
+        # Install the Shelf
         if InstallOptions.installShelf:
             from syncsketchGUI import install_shelf, uninstall_shelf
             uninstall_shelf()
@@ -473,7 +597,7 @@ if MAYA_RUNNING:
                 
                 self.run_shell_command(cmd, 'syncSketch GUI and Dependencies')
 
-                # Our scripts folder won't be seen by Maya until Maya restarts (and reads the module data)
+                #Our scripts folder won't be seen by Maya until Maya restarts (and reads the module data)
                 #so manually add it to sys.path
                 if CONTEXT.scripts_dir not in sys.path:
                     sys.path.append(CONTEXT.scripts_dir)
