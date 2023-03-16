@@ -1,6 +1,14 @@
 from syncsketchGUI.installScripts import install_syncsketch_python3 as installGui
 from syncsketchGUI.installScripts.maintenance import getVersionDifference
-import importlib
+
+try:
+    #python2
+    reload
+except:
+    #python3
+    import importlib.reload as reload
+
+
 import os
 import time
 import webbrowser
@@ -65,14 +73,14 @@ def reload_toolkit():
     from syncsketchGUI.lib import user
     import syncsketchGUI.gui
 
-    importlib.reload(database)
-    importlib.reload(video)
-    importlib.reload(gui)
-    importlib.reload(path)
-    importlib.reload(icons)
-    importlib.reload(user)
-    importlib.reload(qt_widgets)
-    importlib.reload(qt_utils)
+    reload(database)
+    reload(video)
+    reload(gui)
+    reload(path)
+    reload(icons)
+    reload(user)
+    reload(qt_widgets)
+    reload(qt_utils)
 
 
     from syncsketchGUI.lib.maya import menu as maya_menu
@@ -81,11 +89,11 @@ def reload_toolkit():
     from syncsketchGUI.lib.maya import timeline as maya_timeline
     from syncsketchGUI.vendor import capture as maya_capture
 
-    importlib.reload(maya_menu)
-    importlib.reload(maya_scene)
-    importlib.reload(maya_shelf)
-    importlib.reload(maya_capture)
-    importlib.reload(maya_timeline)
+    reload(maya_menu)
+    reload(maya_scene)
+    reload(maya_shelf)
+    reload(maya_capture)
+    reload(maya_timeline)
 
 def build_menu():
     maya_menu.build_menu()

@@ -9,7 +9,13 @@ from maya import OpenMaya as om
 
 import logging
 logger = logging.getLogger("syncsketchGUI")
-import importlib
+
+try:
+    #python2
+    reload
+except:
+    #python3
+    import importlib.reload as reload
 
 # ======================================================================
 # Call Command List
@@ -100,7 +106,7 @@ class Playblast(ommpx.MPxCommand):
     
     def doIt(self, *arg):
         import syncsketchGUI;
-        importlib.reload(syncsketchGUI);
+        reload(syncsketchGUI);
         syncsketchGUI.reload_toolkit();
         syncsketchGUI.playblast()
     
@@ -125,7 +131,7 @@ class PlayblastAndUpload(ommpx.MPxCommand):
     
     def doIt(self, *arg):
         import syncsketchGUI;
-        importlib.reload(syncsketchGUI);
+        reload(syncsketchGUI);
         syncsketchGUI.reload_toolkit();
         syncsketchGUI.playblast_and_upload()
     
@@ -138,7 +144,7 @@ class PlayblastAndUploadOption(ommpx.MPxCommand):
     
     def doIt(self, *arg):
         import syncsketchGUI;
-        importlib.reload(syncsketchGUI);
+        reload(syncsketchGUI);
         syncsketchGUI.reload_toolkit();
         syncsketchGUI.show_menu_window()
     

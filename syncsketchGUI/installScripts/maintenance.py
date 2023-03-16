@@ -1,13 +1,20 @@
 import pkg_resources
 import syncsketchGUI
-import importlib
 import os
 
-#import urllib2
+try:
+    #python2
+    reload
+except:
+    #python3
+    import importlib.reload as reload
+
+
 try:
     #python3
     from urllib.request import urlopen
 except:
+    #import urllib2
     #python2
     from urllib import urlopen
 import sys
@@ -36,7 +43,7 @@ def getLatestSetupPyFileFromLocal():
     """Checks locally installed packages version number"""
     import pkg_resources
     #reload module to make sure we have loaded the latest live install
-    importlib.reload(pkg_resources)
+    reload(pkg_resources)
     local = pkg_resources.get_distribution(
         "syncSketchGUI").version
     return local
@@ -91,7 +98,7 @@ def handleUpgrade():
         logger.info("installGui.InstallOptions.upgrade {}".format(installGui.InstallOptions.upgrade))
         #Make sure we only show this window once per Session
         if not installGui.InstallOptions.upgrade == 1:
-            importlib.reload(installGui)
+            reload(installGui)
             #If this is set to 1, it means upgrade was already installed
             installGui.InstallOptions.upgrade = 1
 

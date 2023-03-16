@@ -7,6 +7,15 @@ import webbrowser
 #import math
 #from datetime import datetime, timedelta
 import glob
+import tempfile
+import shutil
+import sys
+import subprocess
+from os.path import expanduser
+import zipfile
+from functools import partial
+import site
+
 
 try:
     #python3
@@ -14,16 +23,13 @@ try:
 except:
     #python2
     from urllib import urlopen
-    
-import tempfile
-import shutil
-import sys
-import subprocess
-from os.path import expanduser
-import zipfile
-import importlib
-from functools import partial
-import site
+
+try:
+    #python2
+    reload
+except:
+    #python3
+    import importlib.reload as reload
 
 try:
     import maya.utils
@@ -884,7 +890,7 @@ class installerUI(QWidget): #, UIDesktop):
         self.close()
         # Open UI
         from syncsketchGUI import standalone
-        importlib.reload(standalone)
+        reload(standalone)
         
         
 

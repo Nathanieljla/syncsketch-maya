@@ -32,8 +32,14 @@ import os
 import sys
 import types
 import shutil
-import importlib
 import json
+
+try:
+    #python2
+    reload
+except:
+    #python3
+    import importlib.reload as reload
 
 
 __version__ = "1.2.6"
