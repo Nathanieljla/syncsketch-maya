@@ -10,7 +10,7 @@
 This is a fork. Please see https://github.com/syncsketch/syncsketch-maya for more info.
 
 Known Issues:
-1. The module definition file currently gets replaced with the last syncSketch installation vs. appending/updating existing information.  If all your versions of Maya are in python3, this shouldn't be an issue.
+1. grease pencil was replaced in 2023, so downloading notes doesn't work.
 
 
 # Installation
@@ -18,7 +18,7 @@ Known Issues:
 ### Drag & Drop
 
 The easiest way to install this application is to ...
-1. Click this File Link > [install_syncketch_python3.py](https://github.com/Nathanieljla/syncsketch-maya/releases/download/v1.3.4-alpha/install_syncsketch_python3.py#install) < to download the installation python file.
+1. Click this File Link > [install_syncketch_python3.py](https://github.com/Nathanieljla/syncsketch-maya/releases/download/v1.3.5-alpha/install_syncsketch_python3.py#install) < to download the installation python file.
 2. Drag drop it from the browser into a maya-viewport. 
 This will automatically install all the dependencies without requiring admin priviliges into your user-directory.
 3. Hit 'Install' and on Allow this process to run python (hit 'Allow' in the popup)
