@@ -29,7 +29,7 @@ try:
     reload
 except:
     #python3
-    import importlib.reload as reload
+    from importlib import reload
 
 try:
     import maya.utils
@@ -150,7 +150,7 @@ def restoreCredentialsFile():
 class Module_manager(object):
     """Used to edit .mod files quickly and easily."""
     
-    MODULE_EXPRESSION = r"(?P<action>\+|\-)\s*(?P<module_name>\w+)\s*(MAYAVERION:(?P<maya_version>\d{4}))?\s*(PLATFORM:(?P<platform>\w+))?\s*(?P<module_version>\d+\.?\d*.?\d*)\s+(?P<module_path>.*)\n(?P<defines>(?P<define>.+(\n?))+)?"
+    MODULE_EXPRESSION = r"(?P<action>\+|\-)\s*(MAYAVERSION:(?P<maya_version>\d{4}))?\s*(PLATFORM:(?P<platform>\w+))?\s*(?P<module_name>\w+)\s*(?P<module_version>\d+\.?\d*.?\d*)\s+(?P<module_path>.*)\n(?P<defines>(?P<define>.+(\n?))+)?"
     
     class Module_definition(object):
         """A .mod file can have multiple entries.  Each definition equates to one entry"""
@@ -182,14 +182,14 @@ class Module_manager(object):
                 self.defines = []
             
         def __str__(self):
-            return_string = '{0} {1} '.format(self.action, self.module_name)
+            return_string = '{0} '.format(self.action)
             if self.maya_version:
-                return_string += 'MAYAVERION:{0} '.format(self.maya_version)
+                return_string += 'MAYAVERSION:{0} '.format(self.maya_version)
                 
             if self.platform:
                 return_string += 'PLATFORM:{0} '.format(self.platform)
                 
-            return_string += '{0} {1}\n'.format(self.module_version, self.module_path)
+            return_string += '{0} {1} {2}\n'.format(self.module_name, self.module_version, self.module_path)
             for define in self.defines:
                 if define:
                     return_string += '{0}\n'.format(define.rstrip('\n'))

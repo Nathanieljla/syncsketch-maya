@@ -5,7 +5,7 @@ try:
     reload
 except:
     #python3
-    import importlib.reload as reload
+    from importlib import reload
 
 main_folder = os.path.dirname(__file__)
 parent_folder = os.path.dirname(main_folder)

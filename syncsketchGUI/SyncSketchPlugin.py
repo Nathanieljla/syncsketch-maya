@@ -15,7 +15,7 @@ try:
     reload
 except:
     #python3
-    import importlib.reload as reload
+    from importlib import reload
 
 # ======================================================================
 # Call Command List

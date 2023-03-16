@@ -39,7 +39,7 @@ try:
     reload
 except:
     #python3
-    import importlib.reload as reload
+    from importlib import reload
 
 
 __version__ = "1.2.6"

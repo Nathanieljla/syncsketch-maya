@@ -1,14 +1,14 @@
 import pkg_resources
 import syncsketchGUI
 import os
+import sys
 
 try:
     #python2
     reload
 except:
     #python3
-    import importlib.reload as reload
-
+    from importlib import reload
 
 try:
     #python3
@@ -17,7 +17,7 @@ except:
     #import urllib2
     #python2
     from urllib import urlopen
-import sys
+
 
 
 import logging
@@ -60,10 +60,10 @@ def getVersionDifference():
          pass
 
 def overwriteLatestInstallerFile():
-    import urllib3
+    #import urllib3
     logger.info("Attempting to replace installGui.py with release {}".format(InstallerLiterals.installerPyGuiPath))
     """Parses latest setup.py's version number"""
-    response = urllib3.urlopen(InstallerLiterals.installerPyGuiPath)
+    response = urlopen(InstallerLiterals.installerPyGuiPath)
     data = response.read()
 
     #Let's get the path of the installer
