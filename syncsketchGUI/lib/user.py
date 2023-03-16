@@ -14,6 +14,14 @@ import logging
 logger = logging.getLogger("syncsketchGUI")
 
 
+MAYA_ACTIVE = False
+try:
+    import maya.cmds as cmds
+    MAYA_ACTIVE = True
+except:
+    pass
+
+
 # ======================================================================
 # Global Variables
 
@@ -282,10 +290,23 @@ class SyncSketchUser():
             logger.warning('Please login first.')
             return
 
-        baseDir = "{0}".format(expanduser('~'))
+        
+        baseDir = baseDir = self.get_bas_dir() #baseDir = "{0}".format(expanduser('~'))
         file = self.host_data.getGreasePencilOverlays(reviewId, itemId, baseDir)
         logger.info("Downloaded Greasepencil file to {}".format(file))
         return file
+    
+    
+    def get_bas_dir(self):
+        if MAYA_ACTIVE:
+            base_dir = cmds.getModulePath(moduleName='syncSketch')
+            base_dir = os.path.join(base_dir, 'temp')
+            if not os.path.exists(base_dir):
+                os.makedirs(base_dir)
+                
+            return base_dir
+        else:
+            return "{0}".format(expanduser('~'))
 
 
     def download_converted_video(self, itemId):
@@ -304,8 +325,7 @@ class SyncSketchUser():
         #maya supports mov only
         fileName = fileName.replace('mp4', 'mov')
 
-
-        baseDir = "{0}".format(expanduser('~'))
+        baseDir = self.get_bas_dir() #baseDir = "{0}".format(expanduser('~'))        
         local_filename = os.path.join(baseDir, fileName)
         r = requests.get(videoURL, stream=True)
         with open(local_filename, 'wb') as f:

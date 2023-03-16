@@ -256,7 +256,7 @@ def apply_imageplane(filename, camera=None):
 
     else:
         # todo: there might be another camera in this hierarchy
-        ssCamera = filter((lambda x: x if "Shape" in x else None), cmds.ls(camera, dag=True))[0]
+        ssCamera = list(filter((lambda x: x if "Shape" in x else None), cmds.ls(camera, dag=True)))[0]
 
     imagePlane = cmds.imagePlane(camera=ssCamera)
     cmds.setAttr("{}.type".format(imagePlane[1], 2), 2)
