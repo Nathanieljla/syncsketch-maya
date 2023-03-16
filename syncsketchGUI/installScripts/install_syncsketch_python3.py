@@ -165,7 +165,7 @@ class Module_manager(object):
             self.module_name = module_name
             self.module_version = module_version
             
-            self.module_path = r'./{0}'.format(self.module_name)
+            self.module_path = r'.\{0}'.format(self.module_name)
             if module_path:
                 self.module_path = module_path
 
@@ -628,11 +628,11 @@ if MAYA_RUNNING:
                 except Exception as e:
                     print(e)
                 
-                ## * By using target, pip show won't find this package anymore
-                #if os.path.isdir(CONTEXT.syncsketch_install_dir):
-                    #shutil.rmtree(CONTEXT.syncsketch_install_dir, ignore_errors=True)
-                    ## todo: delete as well SyncsketchGUI-1.0.0.dist-info
-                    #print('Deleting previous directory for a clean install {0} '.format(CONTEXT.syncsketch_install_dir))
+                # * By using target, pip show won't find this package anymore
+                if os.path.isdir(CONTEXT.syncsketch_install_dir):
+                    shutil.rmtree(CONTEXT.syncsketch_install_dir, ignore_errors=True)
+                    # todo: delete as well SyncsketchGUI-1.0.0.dist-info
+                    print('Deleting previous directory for a clean install {0} '.format(CONTEXT.syncsketch_install_dir))
     
                 cmd = '{0}&install&{1}&--upgrade&--target={2}'.format(CONTEXT.pip_path, CONTEXT.SYNCSKETCH_GUI_RELEASE_PATH,
                                                                      CONTEXT.scripts_dir).split('&')
@@ -645,7 +645,11 @@ if MAYA_RUNNING:
                     sys.path.append(CONTEXT.scripts_dir)
                     print('Add scripts path [{}] to system paths'.format(CONTEXT.scripts_dir))
                 else:
-                    print('scripts path in system paths')    
+                    print('scripts path in system paths')
+                    
+                #We also need to tell the syncSketch where the scripts path is
+                import syncsketchGUI.lib.user
+                syncsketchGUI.lib.user.MAYA_MODULE_PATH = CONTEXT.scripts_dir
     
                 fromSource = os.path.join(CONTEXT.syncsketch_install_dir, 'SyncSketchPlugin.py')
                 toTarget = os.path.join(CONTEXT.plugins_dir, 'SyncSketchPlugin.py')

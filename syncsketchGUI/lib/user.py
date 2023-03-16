@@ -271,6 +271,27 @@ class SyncSketchUser():
 
         return self.host_data.updateItem(item_id, data)
 
+
+    def get_base_dir(self):
+        base_dir = "{0}".format(expanduser('~'))
+        if MAYA_ACTIVE:
+            #This will be defined during the same Maya session that the tool was installed
+            try:
+                root = cmds.getModulePath(moduleName='syncSketch')
+            except:
+                root = os.path.dirname(__file__)
+                
+            root =  root.split('syncSketch')[0]
+            base_dir = os.path.join(root, 'syncSketch','downloads')
+            
+            if not os.path.exists(base_dir):
+                try:
+                    os.makedirs(base_dir)
+                except:
+                    base_dir = "{0}".format(expanduser('~'))
+                
+        return base_dir
+
     # Todo set path properly
     def download_greasepencil(self, reviewId, itemId):
         # not logged in
@@ -291,23 +312,11 @@ class SyncSketchUser():
             return
 
         
-        baseDir = baseDir = self.get_bas_dir() #baseDir = "{0}".format(expanduser('~'))
+        baseDir = baseDir = self.get_base_dir()
         file = self.host_data.getGreasePencilOverlays(reviewId, itemId, baseDir)
         logger.info("Downloaded Greasepencil file to {}".format(file))
         return file
     
-    
-    def get_bas_dir(self):
-        if MAYA_ACTIVE:
-            base_dir = cmds.getModulePath(moduleName='syncSketch')
-            base_dir = os.path.join(base_dir, 'temp')
-            if not os.path.exists(base_dir):
-                os.makedirs(base_dir)
-                
-            return base_dir
-        else:
-            return "{0}".format(expanduser('~'))
-
 
     def download_converted_video(self, itemId):
         self.auto_login()
@@ -325,7 +334,7 @@ class SyncSketchUser():
         #maya supports mov only
         fileName = fileName.replace('mp4', 'mov')
 
-        baseDir = self.get_bas_dir() #baseDir = "{0}".format(expanduser('~'))        
+        baseDir = self.get_base_dir()        
         local_filename = os.path.join(baseDir, fileName)
         r = requests.get(videoURL, stream=True)
         with open(local_filename, 'wb') as f:
