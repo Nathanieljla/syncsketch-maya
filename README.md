@@ -1,11 +1,10 @@
 ![maya2023](https://img.shields.io/badge/Maya2023-tested-brightgreen.svg)
 ![maya2023](https://img.shields.io/badge/Maya2022-tested-brightgreen.svg)
+![maya2023](https://img.shields.io/badge/Maya2020-tested-brightgreen.svg)
 
 #### This fork supports python3 and Maya's module system to keep syncSketch specific content isolated and easier to manage.
 
 #### A thorough testing of this is still needed, however basic functionality seems to be working without issues.
-
-#### The Maya plug-in is not currently compatible with versions 2020 or older. I plan to update the architecture to support python 2.7 builds, but I'm not sure how soon that will be. 
 
 This is a fork. Please see https://github.com/syncsketch/syncsketch-maya for more info.
 
@@ -18,7 +17,7 @@ Known Issues:
 ### Drag & Drop
 
 The easiest way to install this application is to ...
-1. Click this File Link > [install_syncketch_python3.py](https://github.com/Nathanieljla/syncsketch-maya/releases/download/v1.3.5-alpha/install_syncsketch_python3.py#install) < to download the installation python file.
+1. Click this File Link > [install_syncketch_python3.py](https://github.com/Nathanieljla/syncsketch-maya/releases/download/v1.3.6-alpha/install_syncsketch_python3.py#install) < to download the installation python file.
 2. Drag drop it from the browser into a maya-viewport. 
 This will automatically install all the dependencies without requiring admin priviliges into your user-directory.
 3. Hit 'Install' and on Allow this process to run python (hit 'Allow' in the popup)
