@@ -323,7 +323,7 @@ class Maya_context(object):
     MODULE_VERSION = 1.0
     
     SYNCSKETCH_PY_API_RELEASE_PATH = r'https://github.com/syncsketch/python-api/archive/v1.0.7.8.zip'   
-    SYNCSKETCH_GUI_RELEASE_PATH = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/tags/v1.3.5-alpha.zip' #'https://github.com/syncsketch/syncsketch-maya/archive/{}.zip'.format(versionTag)
+    SYNCSKETCH_GUI_RELEASE_PATH = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/tags/v1.3.6-alpha.zip'
  
     def __init__(self, *args, **kwargs):
         super(Maya_context, self).__init__(*args, **kwargs)
@@ -341,16 +341,16 @@ class Maya_context(object):
         self.app_dir = os.getenv('MAYA_APP_DIR')
         self.install_root = os.path.join(self.app_dir, 'modules')
         
-        #Maya_context.SYNCSKETCH_GUI_RELEASE_PATH  = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/tags/v1.3.4-alpha.zip'
-        #Maya_context.SYNCSKETCH_GUI_RELEASE_PATH  = r'https://github.com/Nathanieljla/syncsketch-maya/archive/refs/heads/master.zip'
         
         dev_path = r'C:\Users\natha\Documents\syncsketch-maya'
         if os.path.exists(dev_path):
             Maya_context.SYNCSKETCH_GUI_RELEASE_PATH  = r'git+file:///{0}'.format(dev_path)
         
         if self.max > 2:
+            #python3
             self.module_root = os.path.join(self.MODULE_NAME, 'common')
         else:
+            #python2
             self.version_specific = True
             self.module_root = os.path.join(self.MODULE_NAME, 'platforms', str(self.version), 
                                                Platforms.get_name(self.platform),
@@ -364,7 +364,7 @@ class Maya_context(object):
         self.site_packages_dir =  os.path.join(self.scripts_dir, 'site-packages')
                 
         self.ffmpeg_dir = os.path.join(self.scripts_dir, 'ffmpeg', 'bin')
-        self.syncsketch_install_dir = os.path.join(self.scripts_dir, 'syncsketchGUI') #'{0}syncsketchGUI'.format(MAYA_SCRIPTS_PATH)        
+        self.syncsketch_install_dir = os.path.join(self.scripts_dir, 'syncsketchGUI')       
         self.get_platform_specific_paths()
         
         
@@ -405,6 +405,22 @@ class Maya_context(object):
         return wrapInstance( int(omui.MQtUtil.mainWindow()), QMainWindow)         
 
     
+    def clear_and_add_define(self, module_manager, maya_version):
+        maya_version = str(maya_version)
+        
+        python_path =  'PYTHONPATH+:={0}'.format(self.site_packages_dir.split(self.module_dir)[1])
+        relative_path = '.\{0}'.format(self.module_root)        
+        platform_name =  self.get_platform_string(Application_context.get_platform())
+        
+        module_definition = Module_manager.Module_definition(self.MODULE_NAME, self.MODULE_VERSION,
+                                                             maya_version=maya_version, platform=platform_name, 
+                                                             module_path=relative_path,
+                                                             defines=[python_path])
+        
+        module_manager.remove_definitions(maya_version=maya_version, platform=platform_name)
+        module_manager.add_definition(module_definition)        
+        
+        
     def pre_install(self):
         try:          
             Application_context.make_folder(self.module_dir)       
@@ -416,26 +432,18 @@ class Maya_context(object):
         except OSError:
             return False
 
-        maya_version = ''
-        platform_name =  self.get_platform_string(Application_context.get_platform())
-        if self.version_specific:
-            maya_version = self.version
-        else:
-            platform_name = ''
-          
         filename = os.path.join(self.install_root, (self.MODULE_NAME + '.mod'))  
-        python_path =  'PYTHONPATH+:={0}'.format(self.site_packages_dir.split(self.module_dir)[1])
-        relative_path = '.\{0}'.format(self.module_root)
-        
-        module_definition = Module_manager.Module_definition(self.MODULE_NAME, self.MODULE_VERSION,
-                                                             maya_version=str(maya_version), platform=platform_name, 
-                                                             module_path=relative_path,
-                                                             defines=[python_path])            
         module_manager = Module_manager()
         module_manager.read_module_definitions(filename)
-        module_manager.remove_definitions(maya_version=str(maya_version), platform=platform_name)
-        module_manager.add_definition(module_definition)
         
+        #We could setup extra logic if we need unique install paths for future versions of Maya
+        if self.version > 2020:
+            #python3 shares a common folder
+            self.clear_and_add_define(module_manager, 2023)
+            self.clear_and_add_define(module_manager, 2022)
+        else:
+            self.clear_and_add_define(module_manager, self.version)
+          
         try:
             module_manager.write_module_definitions(filename)
         except IOError:
@@ -452,7 +460,7 @@ class Maya_context(object):
     """
     def install(self):
         self.thread = Maya_install_thread()
-        self.thread.startInstallationProcess() #start()
+        self.thread.startInstallationProcess()
         
     def post_install(self):
         # Install the Shelf
@@ -879,7 +887,7 @@ class installerUI(QWidget): #, UIDesktop):
             self.install_thread = CONTEXT.get_install_thread()
             self.connect(self.install_thread, SIGNAL('finished()'), self.done)
             self.install_thread.start()
-            #CONTEXT.install()
+            #CONTEXT.install() ##used for debugging in wing.
 
     def __closeButton(self):
         self.clean()
