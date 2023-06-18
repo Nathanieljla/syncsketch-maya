@@ -4,8 +4,7 @@ import time
 import platform
 import sys
 import webbrowser
-#import math
-#from datetime import datetime, timedelta
+
 import glob
 import tempfile
 import shutil
@@ -15,7 +14,6 @@ from os.path import expanduser
 import zipfile
 from functools import partial
 import site
-
 
 try:
     #python3
@@ -202,7 +200,6 @@ class Module_manager(object):
     def __init__(self):
         self._module_definitions = []
         
-    
     def read_module_definitions(self, path):
         self._module_definitions = []
         if (os.path.exists(path)):
